@@ -10,8 +10,6 @@ Project Structure
 ------------------
 
 1. data
-    - fetal-health.csv: Dataset taken from Kaggle with 10+ attributes of fetus health during pregnancy with their subsequent class labels.
-    - fetal-health.names: Feature headers for breast cancer dataset
     - winequality-white.csv: Dataset taken from UCI ML Repository, containing 11 attributes of different white wines and their quality label as judges by experts on the scale of 1-10
     - winequality.names: Feature headers for winequality dataset
 
@@ -30,4 +28,4 @@ How to Run
 Clone the repository using the command `git clone https://github.com/yashkrsingh/CS7641-Randomized-Optimization.git`
 
 Once the files are available in the working directory, running the command `python main.py` from within scripts directory would run all the experiments and generate the figures in the scripts directory.
-
+Separately, `python hyperparametertuning.py` can be run to gather best parameters via a manual gridsearch. The same parameters are already used for all experiments in main.py

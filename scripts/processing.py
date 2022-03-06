@@ -11,16 +11,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import learning_curve
 
 
-def load_fetus_data():
-    fetus = pd.read_csv('../data/fetal-health.csv', sep=',', header=0)
-    col_to_drop = ['histogram_width', 'histogram_min', 'histogram_max', 'histogram_number_of_peaks',
-                   'histogram_number_of_zeroes', 'histogram_mode', 'histogram_mean', 'histogram_median',
-                   'histogram_variance', 'histogram_tendency']
-    fetus = fetus.drop(col_to_drop, axis=1)
-    fetus["fetal_health"].replace({1: 0, 2: 1, 3: 1}, inplace=True)
-    # print(fetus['fetal_health'].value_counts())
-    return fetus
-
 def load_wine_data():
     wine = pd.read_csv('../data/winequality-white.csv', sep=',', header=0)
     bins = (0, 6, 10)
@@ -85,6 +75,44 @@ def plot_learning_curve(data_name, estimator, train_x, train_y, score_metric):
     plt.savefig(f'{data_name}_{estimator.__class__.__name__}_{name}.png', dpi=200, bbox_inches='tight')
 
 
+def plot_comparison_bar(dataframe):
+    plt.clf()
+
+    one_max_df = dataframe[0:4]
+    cont_peak_df = dataframe[4:8]
+    flip_flop_df = dataframe[8:12]
+    df_list = [one_max_df, cont_peak_df, flip_flop_df]
+    name_list = ['One Max', 'Continuous Peaks', 'Flip Flop']
+
+    for i in range(3):
+        fig, axes = plt.subplots(2, 2, figsize=(20, 5))
+        axes[0][0].set_ylabel("Fitness")
+        axes[0][0].grid()
+        axes[0][0].bar(x='algo', height='fitness', data=df_list[i], width=0.3)
+        axes[0][0].set_title("Fitness")
+
+        axes[0][1].set_ylim(0, 8)
+        axes[0][1].set_ylabel("Time (in seconds)")
+        axes[0][1].grid()
+        axes[0][1].bar(x='algo', height='time', data=df_list[i], width=0.3)
+        axes[0][1].set_title("Time Taken")
+
+        axes[1][0].set_ylim(0, 1500)
+        axes[1][0].set_ylabel("Number of Iterations")
+        axes[1][0].grid()
+        axes[1][0].bar(x='algo', height='iterations', data=df_list[i], width=0.3)
+        axes[1][0].set_title("Iterations")
+
+        axes[1][1].set_ylim(0, 50000)
+        axes[1][1].set_ylabel("Number of FEvals")
+        axes[1][1].grid()
+        axes[1][1].bar(x='algo', height='fevals', data=df_list[i], width=0.3)
+        axes[1][1].set_title("Function Evaluations")
+
+        fig.suptitle(f'Runtime Statistics for {name_list[i]}')
+        plt.savefig(f'Stats_{name_list[i]}.png', dpi=200, bbox_inches='tight')
+
+
 def classification_scores(data, classification_report):
     precision = classification_report['macro avg']['precision']
     recall = classification_report['macro avg']['recall']
@@ -94,12 +122,14 @@ def classification_scores(data, classification_report):
     return [data, precision, recall, f1, accuracy]
 
 
-def run_randomized_optimizer(name, problem, results, seed):
+def run_randomized_optimizer(name, problem, results, seed, restart, i_temp, decay, m_temp, pop_size, mprob, keep_pct):
     curves = {}
     fit = []
 
     start = time.perf_counter()
-    best_state, best_fitness, curve = mlrose.simulated_annealing(problem, curve=True, random_state=seed, max_attempts=10)
+    decay = mlrose.GeomDecay(init_temp=i_temp, decay=decay, min_temp=m_temp)
+    best_state, best_fitness, curve = mlrose.simulated_annealing(problem, schedule=decay, curve=True, random_state=seed,
+                                                                 max_attempts=100)
     tt = time.perf_counter() - start
     results.loc[results.shape[0]] = [name, 'sa', best_fitness, len(curve), problem.fitness_evaluations, tt]
     curve = deepcopy(curve)
@@ -107,7 +137,8 @@ def run_randomized_optimizer(name, problem, results, seed):
     fit.append(best_fitness)
 
     start = time.perf_counter()
-    best_state, best_fitness, curve = mlrose.random_hill_climb(problem, curve=True, random_state=seed, max_attempts=10)
+    best_state, best_fitness, curve = mlrose.random_hill_climb(problem, restarts=restart, curve=True, random_state=seed,
+                                                               max_attempts=100)
     tt = time.perf_counter() - start
     results.loc[results.shape[0]] = [name, 'rhc', best_fitness, len(curve), problem.fitness_evaluations, tt]
     curve = deepcopy(curve)
@@ -115,7 +146,8 @@ def run_randomized_optimizer(name, problem, results, seed):
     fit.append(best_fitness)
 
     start = time.perf_counter()
-    best_state, best_fitness, curve = mlrose.genetic_alg(problem, curve=True, random_state=seed, max_attempts=10)
+    best_state, best_fitness, curve = mlrose.genetic_alg(problem, pop_size=pop_size, mutation_prob=mprob, curve=True,
+                                                         random_state=seed, max_attempts=100)
     tt = time.perf_counter() - start
     results.loc[results.shape[0]] = [name, 'ga', best_fitness, len(curve), problem.fitness_evaluations, tt]
     curve = deepcopy(curve)
@@ -123,7 +155,8 @@ def run_randomized_optimizer(name, problem, results, seed):
     fit.append(best_fitness)
 
     start = time.perf_counter()
-    best_state, best_fitness, curve = mlrose.mimic(problem, curve=True, random_state=seed, max_attempts=10)
+    best_state, best_fitness, curve = mlrose.mimic(problem, keep_pct=keep_pct, curve=True, random_state=seed,
+                                                   max_attempts=100)
     tt = time.perf_counter() - start
     results.loc[results.shape[0]] = [name, 'mimic', best_fitness, len(curve), problem.fitness_evaluations, tt]
     curve = deepcopy(curve)
