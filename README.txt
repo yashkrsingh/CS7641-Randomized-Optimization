@@ -28,4 +28,5 @@ How to Run
 Clone the repository using the command `git clone https://github.com/yashkrsingh/CS7641-Randomized-Optimization.git`
 
 Once the files are available in the working directory, running the command `python main.py` from within scripts directory would run all the experiments and generate the figures in the scripts directory.
+
 Separately, `python hyperparametertuning.py` can be run to gather best parameters via a manual gridsearch. The same parameters are already used for all experiments in main.py

@@ -87,7 +87,7 @@ def part2():
     nn_ga = mlrose.NeuralNetwork(hidden_nodes=[200], algorithm='genetic_alg', curve=True, random_state=seed,
                                  clip_max=5,
                                  learning_rate=0.0001, early_stopping=True,
-                                 max_iters=10000, max_attempts=50)
+                                 max_iters=10000, max_attempts=50, pop_size=10)
     nn_ga.fit(wine_train_x, wine_train_y)
     pred_ga = nn_ga.predict(wine_test_x)
     test_ga = classification_report(wine_test_y, pred_ga, output_dict=True)
